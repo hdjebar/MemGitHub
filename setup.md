@@ -99,6 +99,9 @@ REPO  = "claude-brain"
 
 Commit this change.
 
+> ⚠️ **This step is required.** The skill has a first-run guard that will refuse to proceed
+> until OWNER and REPO are set to real values. Claude will tell you if they are still placeholders.
+
 ---
 
 ## Step 5: Test It
@@ -120,6 +123,36 @@ Remember that I'm a software developer based in Berlin who prefers TypeScript
 ```
 
 Claude will extract the facts and commit them to your repo. Check github.com to see the commit!
+
+---
+
+## Step 6: Automate the Memory Load (Optional but Recommended)
+
+Without automation, you must type the skill path every new conversation. To avoid this,
+add a **system prompt** in claude.ai:
+
+1. Go to **claude.ai → Settings → Custom Instructions** (or your preferred system prompt location)
+2. Add the following, replacing the placeholders:
+
+```
+At the start of every conversation, silently read
+YOUR_USERNAME/YOUR_REPO/skill/SKILL.md via GitHubMCP, then run the LOAD command
+from that skill (read memory.json, present the summary, list sessions).
+Do this before responding to the user's first message.
+```
+
+With this in place, Claude will automatically load your memory at the start of every
+conversation — no trigger phrase needed.
+
+### For Claude Code
+
+Add to your project's `CLAUDE.md` or `~/.claude/CLAUDE.md`:
+
+```markdown
+## Memory
+At session start, read YOUR_USERNAME/YOUR_REPO/skill/SKILL.md via GitHub
+then execute the LOAD command.
+```
 
 ---
 
@@ -173,3 +206,5 @@ Session 2 (thursday, new conversation):
 | Token expired | Generate a new one at github.com/settings/tokens and update Smithery |
 | Claude doesn't follow the skill | Make sure the skill path is correct: `{OWNER}/{REPO}/skill/SKILL.md` |
 | Private repo not accessible | Token must be Fine-grained with "Only select repositories" pointing to your fork |
+| Claude says OWNER/REPO not configured | Edit `skill/SKILL.md` in your fork, set the real values, commit |
+| Two conversations wrote at the same time | Claude will warn you if `write_count` changed — confirm re-read before proceeding |

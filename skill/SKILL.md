@@ -22,6 +22,18 @@ OWNER = "YOUR_GITHUB_USERNAME"
 REPO  = "YOUR_REPO_NAME"
 ```
 
+### ⛔ First-Run Guard
+
+**Before doing anything**, check if OWNER is still `"YOUR_GITHUB_USERNAME"` or REPO is still `"YOUR_REPO_NAME"`.
+
+If either placeholder is unconfigured:
+1. Stop immediately — do not attempt any GitHub reads or writes
+2. Tell the user:
+   > "MemGitHub is not configured yet. Please open `skill/SKILL.md` in your forked repo, set `OWNER` to your GitHub username and `REPO` to your repo name, then commit. See [setup.md](setup.md) for details."
+3. Do not proceed until the user confirms they have updated the values.
+
+---
+
 ## Architecture — Lazy Loading
 
 The key idea: **load a summary first, fetch details only when needed.**
@@ -89,9 +101,11 @@ a specific question requires citing [Memory #N] or when saving/consolidating.
   "version": 4,
   "last_updated": "2026-03-08T14:00:00Z",
   "next_id": 7,
+  "write_count": 12,
   "config": {
     "importance_threshold": 0.3,
     "hot_threshold": 0.7,
+    "max_hot_count": 20,
     "max_load_tokens": 4000
   },
   "stats": {
@@ -110,6 +124,11 @@ a specific question requires citing [Memory #N] or when saving/consolidating.
 }
 ```
 
+**`write_count`** — incremented by 1 on every write. Used to detect sync drift: if the
+`write_count` you read at session start differs from what you see before writing, warn the
+user that another session may have written concurrently and offer to re-read before
+proceeding.
+
 ## Memory Detail Format (Compact, ~25 tokens each)
 
 ```json
@@ -126,11 +145,13 @@ Fields: `i`=id, `c`=content, `t`=type, `imp`=importance.
 
 **Triggers:** "load my memories", conversation start
 
-1. Read `memory.json` only (`mode: "full"`) — ~300 tokens
-2. Present the `summary` to the user
-3. List available sessions from `sessions` array
-4. Ask: "Resume a session or start fresh?"
-5. **Do NOT read memories/global.json yet** — wait until needed
+1. Run the **First-Run Guard** above — stop if OWNER/REPO are still placeholders
+2. Read `memory.json` only (`mode: "full"`) — ~300 tokens
+3. Store the `write_count` from this read as `baseline_write_count`
+4. Present the `summary` to the user
+5. List available sessions from `sessions` array
+6. Ask: "Resume a session or start fresh?"
+7. **Do NOT read memories/global.json yet** — wait until needed
 
 Claude now has enough context to have a useful conversation. The summary tells
 Claude who the user is. Details are fetched lazily.
@@ -172,7 +193,8 @@ This is the **lazy trigger** — details are only fetched when Claude needs them
 1. Read `memory.json` + SHA (already loaded from LOAD)
 2. Create via `push_files`: context.md, progress.md, memories.json (empty)
 3. Append to `sessions` array in memory.json (with SHA!)
-4. Commit: `session: init {name}`
+4. Increment `write_count` in memory.json
+5. Commit: `session: init {name}`
 
 ---
 
@@ -185,14 +207,22 @@ This is the **lazy trigger** — details are only fetched when Claude needs them
    - Global hot → `memories/global.json`
    - Global cold → `memories/archive.json`
    - Session → `sessions/{name}/memories.json`
-3. Append the new memory (compact format)
-4. Read `memory.json` + SHA, update:
+3. **Hot Cap Check:** if adding to global hot and `stats.hot >= config.max_hot_count` (default 20):
+   - Find the hot memory with the lowest `imp` score
+   - Move it to `memories/archive.json` (demote) before adding the new one
+   - This keeps summary regeneration cost bounded regardless of memory count
+4. Append the new memory (compact format)
+5. Read `memory.json` + SHA, update:
    - `summary` — regenerate the natural language paragraph
    - `stats` — increment counts
    - `next_id` — increment
+   - `write_count` — increment by 1
    - `last_updated` — now
-5. Write both files (detail + index) via `push_files`
-6. Confirm: "Saved as Memory #{id}."
+6. **Concurrent Write Check:** if current `write_count` in the file ≠ `baseline_write_count`,
+   warn: "⚠️ Another session may have written since I loaded. Re-read before writing?"
+   Wait for user confirmation before proceeding.
+7. Write both files (detail + index) via `push_files`
+8. Confirm: "Saved as Memory #{id}."
 
 ### Summary Regeneration
 
@@ -210,7 +240,7 @@ When updating the summary, condense ALL hot memories into a paragraph:
 
 1. Read target detail file + SHA
 2. Remove the entry
-3. Update memory.json summary + stats
+3. Read `memory.json` + SHA; update summary + stats + `write_count`
 4. Write both via `push_files`
 
 ---
@@ -223,9 +253,10 @@ When updating the summary, condense ALL hot memories into a paragraph:
 2. Update progress.md
 3. Extract decisions → session memories.json
 4. Promote user-level facts to global (hot or cold detail file)
-5. Regenerate summary in memory.json
-6. Update sessions[].last_updated + stats
-7. Write all via `push_files`
+5. Apply Hot Cap if needed (demote lowest-imp hot to archive)
+6. Regenerate summary in memory.json
+7. Update sessions[].last_updated + stats + `write_count`
+8. Write all via `push_files`
 
 ---
 
@@ -243,9 +274,9 @@ When updating the summary, condense ALL hot memories into a paragraph:
 
 1. Read memory.json + memories/global.json + memories/archive.json
 2. Deduplicate, merge, delete across both
-3. Re-sort by hot_threshold
+3. Re-sort by hot_threshold; enforce max_hot_count cap
 4. Regenerate summary paragraph
-5. Update stats
+5. Update stats + `write_count`
 6. Write all three files back
 
 ---
@@ -256,7 +287,7 @@ When updating the summary, condense ALL hot memories into a paragraph:
 
 1. Read `memories/archive.json`
 2. Find relevant by keyword
-3. Present, offer to promote to hot
+3. Present, offer to promote to hot (subject to hot cap)
 
 ---
 
@@ -270,3 +301,7 @@ When updating the summary, condense ALL hot memories into a paragraph:
 6. **Regenerate summary** on every REMEMBER, FORGET, SAVE SESSION, CONSOLIDATE.
 7. **Global vs session.** User identity → global. Project → session.
 8. **Commit messages:** `memory: {action} — {description}`
+9. **Hot cap.** Never exceed `max_hot_count` hot memories. Demote lowest `imp` to archive first.
+10. **Increment `write_count`** on every write to memory.json.
+11. **Concurrent conflict.** If `write_count` changed since LOAD, warn and confirm before writing.
+12. **First-run guard.** If OWNER/REPO are unconfigured placeholders, stop and prompt the user.

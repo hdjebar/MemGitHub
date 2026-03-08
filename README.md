@@ -78,10 +78,17 @@ See **[setup.md](setup.md)** for full installation instructions.
 
 ## Docs
 
-- **[setup.md](setup.md)** — Install guide (fork → token → Smithery → test)
+- **[setup.md](setup.md)** — Install guide (fork → token → Smithery → system prompt → test)
 - **[article.md](article.md)** — From Google's Always On Memory to MemGitHub
 - **[token-cost.md](token-cost.md)** — Token math & optimization guide
 - **[skill/SKILL.md](skill/SKILL.md)** — The skill Claude reads
+
+## Robustness Features
+
+- **First-run guard** — Claude refuses to proceed if OWNER/REPO are still unconfigured placeholders
+- **Hot memory cap** — Auto-archives lowest-importance memory when hot count hits 20, keeping summary regeneration cost bounded
+- **Sync drift detection** — `write_count` field detects concurrent writes from multiple sessions before any write
+- **System prompt automation** — Optional claude.ai system prompt to auto-load memory at session start (see setup.md Step 6)
 
 ## Credits
 
