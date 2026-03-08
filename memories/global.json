@@ -1,0 +1,6 @@
+[
+  {"i":1,"c":"User is based in Luxembourg","t":"fact","imp":0.9},
+  {"i":2,"c":"User is building an Always On Memory system for Claude, inspired by Google's Always On Memory Agent","t":"goal","imp":0.9},
+  {"i":3,"c":"User prefers KISS architecture — simple, minimal infrastructure, no unnecessary complexity","t":"preference","imp":0.8},
+  {"i":5,"c":"User's GitHub username is hdjebar","t":"fact","imp":0.8}
+]

@@ -8,55 +8,69 @@ Persistent cross-session memory for Claude using a GitHub repo as storage.
 
 Claude has built-in memory, but it's a black box. You can't see what it remembers, organize it by project, or resume a work session from last week. MemGitHub gives you structured, transparent, cross-session memory that you control.
 
-Inspired by [Google's Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — adopted the three-agent architecture, adapted it for Claude with GitHub as storage instead of SQLite. Read the full story: **[article.md](article.md)**
+Inspired by [Google's Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — adopted the three-agent architecture, adapted for Claude with GitHub as storage. Full story: **[article.md](article.md)**
 
-## How It Works
+## How It Works — Lazy Loading
 
 ```
-Any claude.ai or Claude Code session
+Session start: read memory.json (~300 tokens)
     │
-    ├── Read memory.json (one file = everything)
-    │       → global memories (who you are)
-    │       → session index (what projects exist)
-    │       → config
+    ├── Claude reads the SUMMARY paragraph
+    │       → knows who you are immediately
+    │       → sees available sessions
+    │       → costs ~300 tokens, always
     │
-    ├── "resume session X"
-    │       → Read sessions/X/context.md + progress.md + memories.json
-    │       → Pick up where you left off
+    ├── "What do you know about my TOGAF work?"
+    │       → NOW fetches memories/global.json (on demand)
+    │       → answers with [Memory #N] citations
     │
-    ├── "remember that..." / "save session"
-    │       → Extract facts → write back → git commit
+    ├── "Resume session X"
+    │       → fetches sessions/X/ files (on demand)
     │
-    └── Start any session with:
-        "Read {OWNER}/{REPO}/skill/SKILL.md via GitHub then load my memories"
+    └── "Remember that..." / "Save session"
+        → writes to detail file + regenerates summary
 ```
+
+**The summary is the trick.** A natural language paragraph that captures the essence of all your memories in ~50 tokens. Claude works from it most of the time. Details are only fetched when citing specific memories or doing a targeted query.
 
 ## Structure
 
 ```
 your-memory-repo/
-├── memory.json                ← ONE FILE: memories + sessions + config
+├── memory.json                ← INDEX: summary + sessions + config (~300 tok)
+├── memories/
+│   ├── global.json            ← HOT details (importance >= 0.7, on demand)
+│   └── archive.json           ← COLD details (< 0.7, explicit search only)
 ├── sessions/
 │   └── {project-name}/
-│       ├── context.md         ← What the project is about
-│       ├── progress.md        ← Done / next steps
-│       └── memories.json      ← Project-specific memories
+│       ├── context.md
+│       ├── progress.md
+│       └── memories.json
 └── skill/
-    └── SKILL.md               ← Skill: all commands and workflows
+    └── SKILL.md
 ```
+
+## Token Cost Comparison
+
+| Version | LOAD cost @ 50 memories | How |
+|---------|------------------------|-----|
+| v2 (eager, verbose) | ~3,250 tokens | Loads all memories, all fields |
+| v3 (compact + hot/cold) | ~1,250 tokens | Compact format, only hot |
+| **v4 (lazy, summary)** | **~300 tokens** | Summary paragraph only, details on demand |
+
+Full math: **[token-cost.md](token-cost.md)**
 
 ## Commands
 
-| Say | Does |
-|-----|------|
-| "Load my memories" | Reads memory.json, summarizes what Claude knows |
-| "Resume session X" | Loads session context + progress + memories |
-| "New session for X" | Creates session folder + updates memory.json |
-| "Remember that..." | Extracts fact → saves to global or session |
-| "Save session" | Updates progress, extracts memories, commits |
-| "Forget memory #N" | Soft-deletes a memory |
-| "Consolidate" | Deduplicates, merges, cleans up |
-| "List sessions" | Shows all sessions from memory.json |
+| Say | Reads | Cost |
+|-----|-------|------|
+| Load my memories | memory.json only | ~300 tok |
+| What do you know about X? | + memories/global.json | +~25/memory |
+| Resume session X | + sessions/X/ files | +~500-1,500 tok |
+| Remember that... | Write detail + update summary | ~500 tok |
+| Save session | Write session + update summary | ~1,000 tok |
+| Consolidate | Read all + write all | ~2,000-5,000 tok |
+| Search archive | + memories/archive.json | +~25/memory |
 
 ## Quick Start
 
@@ -64,22 +78,14 @@ See **[setup.md](setup.md)** for full installation instructions.
 
 ## Docs
 
-- **[setup.md](setup.md)** — 5-minute install guide (fork → token → Smithery → test)
-- **[article.md](article.md)** — The full story: from Google's Always On Memory to MemGitHub
-- **[skill/SKILL.md](skill/SKILL.md)** — The skill Claude reads (all commands and workflows)
-
-## KISS Principles
-
-- **One JSON file** for global state — no database, no vector store
-- **Git history = changelog** — every memory update is a commit
-- **Works from claude.ai AND Claude Code** — same repo, same memories
-- **Human-readable** — browse your memories on github.com
-- **User-triggered** — you control when memories are read/written
-- **Session isolation** — per-project context in separate folders
+- **[setup.md](setup.md)** — Install guide (fork → token → Smithery → test)
+- **[article.md](article.md)** — From Google's Always On Memory to MemGitHub
+- **[token-cost.md](token-cost.md)** — Token math & optimization guide
+- **[skill/SKILL.md](skill/SKILL.md)** — The skill Claude reads
 
 ## Credits
 
-Architecture inspired by Google's [Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent). The three-agent pattern (Ingest → Consolidate → Query) is theirs. The GitHub-as-storage adaptation, session folders, and KISS implementation are new.
+Architecture inspired by Google's [Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent).
 
 ## License
 

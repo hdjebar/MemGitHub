@@ -1,0 +1,4 @@
+[
+  {"i":4,"c":"User works with enterprise architecture frameworks including TOGAF and ArchiMate","t":"fact","imp":0.7},
+  {"i":6,"c":"User prefers GitHub as persistent storage backend over Mem0 or window.storage","t":"preference","imp":0.7}
+]
