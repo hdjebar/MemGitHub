@@ -6,7 +6,9 @@ Persistent cross-session memory for Claude using a GitHub repo as storage.
 
 ## Why?
 
-Claude forgets everything between conversations. This system gives Claude persistent memory by storing facts, preferences, and project context in a GitHub repo that Claude reads/writes via the GitHub MCP connector.
+Claude has built-in memory, but it's a black box. You can't see what it remembers, organize it by project, or resume a work session from last week. MemGitHub gives you structured, transparent, cross-session memory that you control.
+
+Inspired by [Google's Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — adopted the three-agent architecture, adapted it for Claude with GitHub as storage instead of SQLite. Read the full story: **[article.md](article.md)**
 
 ## How It Works
 
@@ -60,6 +62,12 @@ your-memory-repo/
 
 See **[setup.md](setup.md)** for full installation instructions.
 
+## Docs
+
+- **[setup.md](setup.md)** — 5-minute install guide (fork → token → Smithery → test)
+- **[article.md](article.md)** — The full story: from Google's Always On Memory to MemGitHub
+- **[skill/SKILL.md](skill/SKILL.md)** — The skill Claude reads (all commands and workflows)
+
 ## KISS Principles
 
 - **One JSON file** for global state — no database, no vector store
@@ -68,6 +76,10 @@ See **[setup.md](setup.md)** for full installation instructions.
 - **Human-readable** — browse your memories on github.com
 - **User-triggered** — you control when memories are read/written
 - **Session isolation** — per-project context in separate folders
+
+## Credits
+
+Architecture inspired by Google's [Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent). The three-agent pattern (Ingest → Consolidate → Query) is theirs. The GitHub-as-storage adaptation, session folders, and KISS implementation are new.
 
 ## License
 
