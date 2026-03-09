@@ -218,6 +218,16 @@ This means MemGitHub in Claude Code can now operate on a spectrum from fully man
 
 See [setup.md Step 7](setup.md) for configuration examples.
 
+### Architecture Limitation: Sessions Are Still Isolated
+
+An important nuance that the above might obscure: **all Claude sessions remain fully isolated from each other.** `/loop`, hooks, cron, and background agents are *intra-session* automation — they work within a single Claude Code session and die when that session closes. There is no inter-session event bus.
+
+This means a Claude Code session running `/loop 5m check for updates` cannot monitor what a claude.ai web session writes. The only shared state is the GitHub repo itself, and synchronization happens through **poll-on-read** — each session reads `memory.json` at startup and checks `write_count` before writing to detect drift.
+
+A true event-driven architecture — where a dedicated Claude session monitors all other sessions' memory activity in real time — is **not possible today**. It would require either external infrastructure (GitHub webhooks → relay → Claude API) or new Anthropic platform capabilities (inter-session messaging, persistent background processes).
+
+For a full analysis of this constraint, the available workarounds, and what would need to change, see **[ARCHITECTURE.md](ARCHITECTURE.md)**.
+
 ### Why MemGitHub Still Matters
 
 All three native systems share a common trait: **opacity**. Built-in memory is a managed summary you can view but not deeply structure. Auto-memory is local `.md` files you can read but that lack schema, scoring, or session isolation. The API memory tool is powerful but requires you to build the structure yourself.

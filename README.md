@@ -97,6 +97,7 @@ See **[setup.md](setup.md)** for full installation instructions.
 
 - **[setup.md](setup.md)** — Install guide (fork → token → Smithery → system prompt → test)
 - **[article.md](article.md)** — From Google's Always On Memory to MemGitHub
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** — Session isolation, event-driven constraints, and workarounds
 - **[token-cost.md](token-cost.md)** — Token math & optimization guide
 - **[skill/SKILL.md](skill/SKILL.md)** — The skill Claude reads
 
@@ -122,6 +123,28 @@ The biggest shift: **Claude Code now supports near-daemon automation.** With `/l
 The best setup in 2026: **use both** — let Claude's built-in memory handle casual preferences, use MemGitHub for structured project work and decision trails.
 
 Full analysis: **[article.md — Postscript](article.md#postscript-march-2026--claudes-memory-landscape-has-changed)**
+
+## Limitations & Future
+
+All Claude sessions — web, Code, API, Cowork — are **fully isolated**. There is no inter-session
+messaging, no shared event bus, no way for one session to monitor another's activity. This is
+the fundamental architectural constraint shaping MemGitHub.
+
+**What this means in practice:** Claude Code's `/loop`, hooks, and background agents are
+*intra-session* automation — they work within a single session and stop when it closes.
+A Claude Code session running `/loop 5m check for updates` cannot detect what a claude.ai
+web session writes in real time. The only shared state is the GitHub repo itself.
+
+**How MemGitHub handles it:** Poll-on-read. Every session reads `memory.json` at startup.
+The `write_count` field detects if another session wrote between your reads. It's not
+real-time, but it's consistent, zero-infrastructure, and sufficient for 95% of use cases.
+
+**What would enable true event-driven:** GitHub webhooks → external relay → Claude API,
+a custom MCP server as an event bridge, or new Anthropic platform capabilities
+(inter-session messaging, persistent background processes). None require changes to
+MemGitHub's core architecture — only the automation layer around it.
+
+Full analysis: **[ARCHITECTURE.md](ARCHITECTURE.md)**
 
 ## Credits
 
