@@ -106,7 +106,22 @@ See **[setup.md](setup.md)** for full installation instructions.
 - **Hot memory cap** — Auto-archives lowest-importance memory when hot count hits 20, keeping summary regeneration cost bounded
 - **Sync drift detection** — `write_count` field detects concurrent writes from multiple sessions before any write
 - **System prompt automation** — Optional claude.ai system prompt to auto-load memory at session start (see setup.md Step 6)
+- **Claude Code automation** — SessionStart/Stop hooks, `/loop` for periodic consolidation, background agents, and cron scheduling (see setup.md Step 7)
 - **Agent Skills standard** — Follows the [open standard](https://github.com/anthropics/skills), works across claude.ai, Claude Code, and the Claude Agent SDK
+
+## Postscript: March 2026 — Claude's Memory Landscape Has Changed
+
+*Added March 9, 2026*
+
+Claude's memory ecosystem has expanded significantly since MemGitHub was first built. Three native systems now exist — **claude.ai built-in memory** (free for all users, with import/export), **Claude Code auto-memory** (local `MEMORY.md` files per project), and the **Claude API memory tool** (client-side file persistence for agentic workflows). All three share a common trait: opacity. They work, but you can't deeply structure, version, or audit them.
+
+MemGitHub remains differentiated on **git-native auditability** (every change is a diffable, revertable commit), **structured schema** (typed memories with importance scoring and hot/cold tiering), **session folders** (full project context isolation), and **cross-tool portability** (same repo works from claude.ai, Claude Code, Agent SDK, or anything with GitHubMCP).
+
+The biggest shift: **Claude Code now supports near-daemon automation.** With `/loop` (recurring prompts on a timer), **cron scheduling**, **SessionStart/Stop hooks**, **background agents**, and experimental **Agent Teams**, MemGitHub can run in always-on mode inside Claude Code — `/loop 30m consolidate` directly mirrors Google's original 30-minute ConsolidateAgent timer. The architecture didn't need to change; the tooling caught up.
+
+The best setup in 2026: **use both** — let Claude's built-in memory handle casual preferences, use MemGitHub for structured project work and decision trails.
+
+Full analysis: **[article.md — Postscript](article.md#postscript-march-2026--claudes-memory-landscape-has-changed)**
 
 ## Credits
 
