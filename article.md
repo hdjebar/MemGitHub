@@ -78,18 +78,23 @@ The original has separate database tables for memories and consolidations. I sta
 
 Final design: **one `memory.json`** that holds everything — global memories, session index, and config. One read gives Claude the complete picture.
 
-### Background Daemon → User-Triggered Commands
+### Background Daemon → User-Triggered Commands (with Automation Options)
 
-The original runs a file watcher, consolidation timer, and HTTP API as concurrent background services. In claude.ai, there's no background process.
-
-Instead, the system is entirely user-triggered:
+The original runs a file watcher, consolidation timer, and HTTP API as concurrent background services. In claude.ai, there's no background process — so the system is entirely user-triggered:
 
 - "Load my memories" → QueryAgent reads memory.json
 - "Remember that..." → IngestAgent extracts and writes back
 - "Save session" → IngestAgent + progress update
 - "Consolidate" → ConsolidateAgent deduplicates and merges
 
-For Claude Code, the original daemon model works great — I built a version with SessionEnd hooks and cron-based consolidation. But for claude.ai, manual triggers are the right choice.
+For claude.ai, manual triggers remain the right choice. But Claude Code has closed this gap significantly since March 2026. With **`/loop`** (recurring prompts on a timer), **cron scheduling**, **SessionStart/Stop hooks**, and **background agents**, MemGitHub can now run in a near-daemon mode inside Claude Code:
+
+- **SessionStart hook** auto-loads memories when you open a session
+- **`/loop 30m consolidate`** mirrors the original's 30-minute consolidation timer
+- **Background agents** run consolidation without blocking your main workflow
+- **Agent Teams** (experimental) let one agent handle memory while another codes
+
+The KISS principle still applies: use manual triggers for simple sessions, layer on automation when your workflow demands it.
 
 ### Single Context → Session Folders
 
@@ -152,6 +157,8 @@ Read {OWNER}/{REPO}/skill/SKILL.md via GitHub then load my memories
 
 Claude reads the skill, knows all the commands, loads your context. One line.
 
+Since January 2026, the SKILL.md follows the [Agent Skills open standard](https://github.com/anthropics/skills), which means it works the same way across claude.ai, Claude Code, and the Claude Agent SDK. Claude Code merged slash commands and skills in the same release, so the skill also works as a `/mem-github` command if placed in the right directory.
+
 ## What I Learned
 
 **The three-agent pattern is the real insight.** Not the implementation details. SQLite vs GitHub vs Postgres doesn't matter. What matters is: extract atomic facts, periodically consolidate, and retrieve with citations. Those three operations, separated cleanly, produce emergent intelligence.
@@ -162,7 +169,7 @@ Claude reads the skill, knows all the commands, loads your context. One line.
 
 **Git history is underrated as a memory feature.** Every memory update is a commit with a message. You can audit what Claude remembered, when, and why. Roll back mistakes. Browse on github.com. It's version control for your AI's brain.
 
-**User-triggered beats always-on for most use cases.** The "always on" in the original name implies a running process. But most users don't need real-time memory extraction from a file watcher. They need: "Remember this. Now save my progress. Tomorrow, resume where I left off." Explicit triggers give you control.
+**User-triggered beats always-on for most use cases.** The "always on" in the original name implies a running process. But most users don't need real-time memory extraction from a file watcher. They need: "Remember this. Now save my progress. Tomorrow, resume where I left off." Explicit triggers give you control. That said, Claude Code's `/loop` and hooks now let you opt into always-on behavior when you want it — the best of both worlds.
 
 ## Try It
 
@@ -193,6 +200,23 @@ A lot has happened since I wrote this article. Claude's own memory ecosystem has
 **Claude Code auto-memory** records build commands, debugging insights, architecture notes, and code style preferences locally in `~/.claude/projects/<project>/memory/MEMORY.md`. It's on by default and accumulates knowledge without you writing anything.
 
 **Claude API memory tool** (client-side) lets Claude create, read, update, and delete files in a `/memories` directory that persists between API sessions. It's designed for agentic workflows where context needs to survive across executions.
+
+### Claude Code's Near-Daemon Capabilities
+
+The biggest change since I wrote the main article: **Claude Code now supports the daemon-like automation** that I originally said wasn't possible. Key features from the 2.1.x releases:
+
+- **`/loop`** — run any prompt on a recurring interval (e.g., `/loop 30m consolidate`), directly mirroring the original's 30-minute ConsolidateAgent timer
+- **Cron scheduling** — schedule recurring prompts within a session for even more precise timing control
+- **SessionStart/Stop hooks** — auto-trigger memory load at session start and save reminders at session end, no manual typing needed
+- **HTTP hooks** — POST JSON to a URL on events, enabling webhook-based triggers for memory operations
+- **Background agents** — run memory consolidation in the background without blocking your coding workflow
+- **Agent Teams** (experimental, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) — run a memory-management agent in parallel alongside your coding agent
+- **`/batch`** — batch multiple memory operations in a single command
+- **Merged slash commands and skills** — SKILL.md files now also function as slash commands, so `/mem-github` works directly
+
+This means MemGitHub in Claude Code can now operate on a spectrum from fully manual ("load my memories") to fully automated (hooks + loop + background agents). The architecture didn't need to change — the same skill, the same commands — it's the tooling around it that caught up.
+
+See [setup.md Step 7](setup.md) for configuration examples.
 
 ### Why MemGitHub Still Matters
 

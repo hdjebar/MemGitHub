@@ -191,6 +191,88 @@ Use auto-memory for code-level patterns. Use MemGitHub for everything else.
 
 ---
 
+## Step 7: Advanced Claude Code Automation (Optional)
+
+Claude Code 2.1+ introduced features that make MemGitHub's operations automatable —
+closing the gap with the "always-on" daemon model that inspired this project.
+
+### Auto-Load with SessionStart Hooks
+
+Use a [hook](https://code.claude.com/docs/en/hooks) to auto-load memories when any
+Claude Code session starts. Add to `.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "echo 'Read YOUR_USERNAME/YOUR_REPO/skill/SKILL.md via GitHub then load my memories'"
+      }
+    ]
+  }
+}
+```
+
+This injects the load instruction at the start of every session without needing
+a CLAUDE.md prompt.
+
+### Auto-Save with Stop Hooks
+
+Similarly, use a `Stop` hook to remind Claude to save session before ending:
+
+```json
+{
+  "hooks": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "echo 'If there are unsaved memories, run SAVE SESSION before stopping.'"
+      }
+    ]
+  }
+}
+```
+
+### Periodic Consolidation with `/loop`
+
+The `/loop` command runs a prompt on a recurring interval. Use it for periodic
+memory consolidation during long work sessions:
+
+```
+/loop 30m consolidate memories if write_count has increased
+```
+
+This mirrors Google's Always On Memory Agent's `ConsolidateAgent` timer — the
+original ran every 30 minutes, and now Claude Code can do the same.
+
+### Cron-Scheduled Memory Maintenance
+
+Claude Code now supports **cron scheduling** for recurring prompts within a session.
+You can schedule consolidation or archive checks on a timer, which gives you
+daemon-like behavior without a separate process.
+
+### Background Agents for Heavy Operations
+
+For large memory stores, run consolidation as a **background agent** so it doesn't
+block your main session:
+
+```
+Run consolidation in the background: read all memory files, deduplicate, and
+write back. Notify me when done.
+```
+
+Background agents run autonomously and send completion notifications when finished.
+
+### Agent Teams (Experimental)
+
+With `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, you can run multiple agents in
+parallel — for example, one agent working on code while another handles memory
+operations in a separate worktree. This enables true separation of concerns
+between your coding workflow and your memory management.
+
+---
+
 ## How It Works After Setup
 
 Every new conversation, just say:
