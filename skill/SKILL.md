@@ -7,11 +7,17 @@ description: >
   "save session", "resume session", "new session", "consolidate", "what do you know",
   "what do you remember", "show my memories", "list sessions", or any reference to
   persistent memory, cross-session context, or the memory repo.
+allowed_tools:
+  - "GitHubMCP:*"
 ---
 
 # MemGitHub — GitHub-Backed Persistent Memory (v4 Lazy Loading)
 
 All memory lives in a GitHub repo. Every write is a git commit.
+
+> **Agent Skills Standard:** This skill follows the [Agent Skills open standard](https://github.com/anthropics/skills)
+> and works in claude.ai, Claude Code, and the Claude Agent SDK. In Claude Code,
+> skills in `.claude/skills/` or `--add-dir` directories are discovered automatically.
 
 ## Required Tool
 

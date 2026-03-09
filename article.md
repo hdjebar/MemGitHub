@@ -177,3 +177,35 @@ Full setup takes 5 minutes. Instructions in [setup.md](setup.md).
 ---
 
 *Built with Claude. Stored in Git. Inspired by Google.*
+
+---
+
+## Postscript: March 2026 — Claude's Memory Landscape Has Changed
+
+*Added March 9, 2026*
+
+A lot has happened since I wrote this article. Claude's own memory ecosystem has expanded significantly, and it's worth explaining how MemGitHub fits into the new landscape.
+
+### What Claude Now Offers Natively
+
+**Claude.ai built-in memory** (now free for all users, March 2026) automatically summarizes your conversations and creates a synthesis of key insights. It supports project-level memory isolation, memory import from other AI providers (ChatGPT, Gemini, etc.), and export. You can view and edit memories in Settings.
+
+**Claude Code auto-memory** records build commands, debugging insights, architecture notes, and code style preferences locally in `~/.claude/projects/<project>/memory/MEMORY.md`. It's on by default and accumulates knowledge without you writing anything.
+
+**Claude API memory tool** (client-side) lets Claude create, read, update, and delete files in a `/memories` directory that persists between API sessions. It's designed for agentic workflows where context needs to survive across executions.
+
+### Why MemGitHub Still Matters
+
+All three native systems share a common trait: **opacity**. Built-in memory is a managed summary you can view but not deeply structure. Auto-memory is local `.md` files you can read but that lack schema, scoring, or session isolation. The API memory tool is powerful but requires you to build the structure yourself.
+
+MemGitHub provides what none of them do:
+
+- **Git-native auditability** — every memory change is a commit with a message, diffable and revertable
+- **Structured schema** — typed memories with importance scoring, hot/cold tiering, and compact format
+- **Session folders** — full project context (goals, progress, decisions) isolated per workstream
+- **Cross-tool portability** — the same memory repo works from claude.ai, Claude Code, the Agent SDK, or any tool with GitHub MCP access
+- **User control** — you decide what gets remembered, when it's consolidated, and what gets archived
+
+Think of it this way: Claude's built-in memory is like your phone's autocomplete learning your typing patterns. MemGitHub is like a structured notebook with chapters, an index, and version history. Both are useful. They serve different purposes.
+
+The best setup in 2026 is to **use both**: let Claude's built-in memory handle casual preferences and conversational context, and use MemGitHub for structured project work, decision trails, and anything you want to audit, version, or share across tools.

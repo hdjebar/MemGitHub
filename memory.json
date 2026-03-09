@@ -2,13 +2,17 @@
   "version": 4,
   "last_updated": null,
   "next_id": 1,
+  "write_count": 0,
   "config": {
     "importance_threshold": 0.3,
     "hot_threshold": 0.7,
+    "max_hot_count": 20,
     "max_load_tokens": 4000
   },
   "stats": {
     "total": 0,
+    "hot": 0,
+    "cold": 0,
     "by_type": {}
   },
   "summary": "",

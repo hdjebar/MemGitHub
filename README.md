@@ -2,11 +2,28 @@
 
 Persistent cross-session memory for Claude using a GitHub repo as storage.
 
-**One repo = Claude's brain.** Every memory is a git commit. Works in claude.ai and Claude Code.
+**One repo = Claude's brain.** Every memory is a git commit. Works in claude.ai, Claude Code, and the Claude Agent SDK.
 
-## Why?
+## Why MemGitHub When Claude Has Built-In Memory?
 
-Claude has built-in memory, but it's a black box. You can't see what it remembers, organize it by project, or resume a work session from last week. MemGitHub gives you structured, transparent, cross-session memory that you control.
+As of March 2026, Claude has free built-in memory for all users — it summarizes conversations,
+learns preferences, and even lets you import memories from other AI providers. Claude Code
+has auto-memory that records build commands and code patterns locally.
+
+So why MemGitHub? Because built-in memory is a **managed black box**, and sometimes you
+need a **transparent, structured system you control**.
+
+| | Claude Built-In Memory | Claude Code Auto-Memory | MemGitHub |
+|---|---|---|---|
+| **Transparency** | View/edit in settings | Local MEMORY.md files | Every change is a git commit |
+| **Structure** | Free-text summaries | Free-text notes | Typed, scored, hot/cold tiered |
+| **Project isolation** | Project summaries | Per-project directories | Full session folders (context + progress + decisions) |
+| **Version history** | No rollback | No rollback | Full git history, diff, revert |
+| **Portability** | Export as text blob | Machine-local only | Standard JSON, works anywhere |
+| **Cross-tool** | claude.ai only | Claude Code only | Any tool with GitHubMCP |
+| **Auditable** | Not really | Partially (local files) | Fully (git log, blame, PR review) |
+
+MemGitHub is for people who want to **see, version, and control** what their AI remembers.
 
 Inspired by [Google's Always On Memory Agent](https://github.com/GoogleCloudPlatform/generative-ai/tree/main/gemini/agents/always-on-memory-agent) — adopted the three-agent architecture, adapted for Claude with GitHub as storage. Full story: **[article.md](article.md)**
 
@@ -89,6 +106,7 @@ See **[setup.md](setup.md)** for full installation instructions.
 - **Hot memory cap** — Auto-archives lowest-importance memory when hot count hits 20, keeping summary regeneration cost bounded
 - **Sync drift detection** — `write_count` field detects concurrent writes from multiple sessions before any write
 - **System prompt automation** — Optional claude.ai system prompt to auto-load memory at session start (see setup.md Step 6)
+- **Agent Skills standard** — Follows the [open standard](https://github.com/anthropics/skills), works across claude.ai, Claude Code, and the Claude Agent SDK
 
 ## Credits
 

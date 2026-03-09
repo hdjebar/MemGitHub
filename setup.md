@@ -80,6 +80,10 @@ claude mcp add github -- npx -y @modelcontextprotocol/server-github
 ```
 Set `GITHUB_PERSONAL_ACCESS_TOKEN` env var to your token from Step 2.
 
+**Tip:** If you already have GitHub MCP connected in claude.ai, Claude Code can
+reuse those connectors automatically. They appear as `claude.ai connectors` in
+your session. To opt out, set `ENABLE_CLAUDEAI_MCP_SERVERS=false`.
+
 ---
 
 ## Step 4: Configure the Skill
@@ -131,7 +135,7 @@ Claude will extract the facts and commit them to your repo. Check github.com to 
 Without automation, you must type the skill path every new conversation. To avoid this,
 add a **system prompt** in claude.ai:
 
-1. Go to **claude.ai → Settings → Custom Instructions** (or your preferred system prompt location)
+1. Go to **claude.ai → Settings → Profile → Custom Instructions**
 2. Add the following, replacing the placeholders:
 
 ```
@@ -144,6 +148,17 @@ Do this before responding to the user's first message.
 With this in place, Claude will automatically load your memory at the start of every
 conversation — no trigger phrase needed.
 
+### Alternative: Upload as a Custom Skill in claude.ai
+
+Since January 2026, claude.ai supports **custom skills** on Pro, Max, Team, and
+Enterprise plans. You can upload the `skill/` folder as a zip file:
+
+1. Go to **Settings → Features → Skills**
+2. Click **Upload Skill** and select a zip of the `skill/` directory
+3. Claude will discover and invoke it automatically when you mention memory commands
+
+This avoids the system prompt entirely — Claude will auto-detect when the skill is relevant.
+
 ### For Claude Code
 
 Add to your project's `CLAUDE.md` or `~/.claude/CLAUDE.md`:
@@ -153,6 +168,26 @@ Add to your project's `CLAUDE.md` or `~/.claude/CLAUDE.md`:
 At session start, read YOUR_USERNAME/YOUR_REPO/skill/SKILL.md via GitHub
 then execute the LOAD command.
 ```
+
+Alternatively, copy the `skill/` folder into `.claude/skills/mem-github/` in your
+project or `~/.claude/skills/mem-github/` globally. Claude Code auto-discovers
+skills in these directories and via `--add-dir`.
+
+### How MemGitHub Relates to Claude Code Auto-Memory
+
+Claude Code has its own **auto-memory** system (`~/.claude/projects/<project>/memory/MEMORY.md`)
+that records build commands, debugging insights, and code style preferences locally.
+The two systems are complementary:
+
+| | Claude Code Auto-Memory | MemGitHub |
+|---|---|---|
+| **Scope** | One machine, one project | Cross-device, cross-tool |
+| **Storage** | Local filesystem | GitHub (versioned, auditable) |
+| **Content** | Code patterns, build commands | Identity, decisions, project context |
+| **Written by** | Claude automatically | Claude on your command |
+| **Survives** | Machine wipes? No | Machine wipes? Yes |
+
+Use auto-memory for code-level patterns. Use MemGitHub for everything else.
 
 ---
 
@@ -208,3 +243,4 @@ Session 2 (thursday, new conversation):
 | Private repo not accessible | Token must be Fine-grained with "Only select repositories" pointing to your fork |
 | Claude says OWNER/REPO not configured | Edit `skill/SKILL.md` in your fork, set the real values, commit |
 | Two conversations wrote at the same time | Claude will warn you if `write_count` changed — confirm re-read before proceeding |
+| Conflicts with Claude Code auto-memory | No conflict — they serve different purposes (see comparison table above) |

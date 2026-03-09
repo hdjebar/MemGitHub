@@ -62,17 +62,25 @@ asks "what do you know about X?" or "cite the specific memory about Y."
 
 Note: summary stays ~300 tokens regardless of memory count. That's the point.
 
+With Sonnet 4.5/4.6 and Opus 4.5/4.6 now supporting **1M token context windows** (beta),
+even a fully loaded 500-memory store (~12,800 tokens) is less than 1.3% of the available
+context. The lazy loading architecture was designed when 200K was the ceiling — at 1M,
+it's even more headroom than originally planned.
+
 ## Real Money Cost
 
 For claude.ai Pro/Max: included in subscription.
 
-For API users (Sonnet pricing):
+For API users (Sonnet 4.5 pricing as of March 2026: $3/M input, $15/M output):
 
 | Usage | Est. monthly cost |
-|-------|-------------------|
+|-------|---------|
 | Light (1 session/day, lazy) | ~$0.05 |
 | Medium (3 sessions/day, queries) | ~$0.25 |
 | Heavy (10 sessions/day, full) | ~$1.50 |
+
+These estimates are for the memory operations only (reads/writes). Your actual
+conversation tokens are separate and typically much larger.
 
 ## The Summary Trick
 
